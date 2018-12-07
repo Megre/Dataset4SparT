@@ -21,14 +21,14 @@ Dataset for: Accurate Design Pattern Detection Based on Idiomatic Implementation
 
 2 How to Browse the Data?
   The ".qrules" are plain text files, thus can be opened with your favorite text viewer.
-  The ".owl" files are text files that are saved as RDF/XML syntax. In particular, the Ontology Models in the Layered Knowledge Graph directory can be opened with Prot®¶g®¶ (https://protege.stanford.edu) or your favorite text viewer. Prot®¶g®¶ is recommended since it provides navigators and syntax highlighting. The ontologies in the Generated Ontologies directory can be opened with Prot®¶g®¶ or your favorite text viewer. If opening with Prot®¶g®¶, please stop the reasoners since they may slow down your computer.
+  The ".owl" files are text files that are saved as RDF/XML syntax. In particular, the Ontology Models in the Layered Knowledge Graph directory can be opened with Prot√©g√© (https://protege.stanford.edu) or your favorite text viewer. Prot√©g√© is recommended since it provides navigators and syntax highlighting. The ontologies in the Generated Ontologies directory can be opened with Prot√©g√© or your favorite text viewer. If opening with Prot√©g√©, please stop the reasoners since they may slow down your computer.
   As for instances detected by SparT, two ways to browse them are:
   1) They are reported in "Pattern Instances Detected by RaM, DPD, DPF and SparT.pdf". In this way, it is easy to make a visual comparison with different approaches and instances;
-  2) They are also saved into the ontologies in the Generated Ontologies directory. Using Prot®¶g®¶, it is easy to navigate between linked individuals.
+  2) They are also saved into the ontologies in the Generated Ontologies directory. Using Prot√©g√©, it is easy to navigate between linked individuals.
 
 3 Description of the Dataset
 3.1 Layered Knowledge Graph
-  The ".owl" files are ontology models developed with Prot®¶g®¶. An ontology model imports dependent ontology models in higher layers. 
+  The ".owl" files are ontology models developed with Prot√©g√©. An ontology model imports dependent ontology models in higher layers. 
   The inference rules and pattern templates (.qrules) are based on SPARQL update language. An inference file (.qrules) is attached to the ontology model that has the same file name prefix. Thus, the order of inference is sequenced by the dependency order of ontology models. 
   The pattern templates are encoded in "Java.DesignPattern.qrules". For readability, we commented the templates. A pattern instance is identified by a combination of key roles. As shown in the pattern templates, we join the names of key roles with SHA1 (Secure Hash Algorithm) signature to uniquely identify the combination. Key roles do not mean that other roles are not allowed or needed. In some cases, an instance is composed of one role of each key roles and multiple other roles.
   In "Description of Vocabularies.pdf", we provide a description of the vocabularies (ontology classes and properties) that reside in each ontology model. Some of these vocabularies are handled by vocabulary handlers, e.g. Interface, hasMethod and callsMethod that are extracted straightforward from the source code. The others are inferred, e.g. the representation of complex concepts and the generalization of relationships.
