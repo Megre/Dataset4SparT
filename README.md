@@ -1,9 +1,6 @@
 # Dataset for: Accurate Design Pattern Detection Based on Idiomatic Implementation Matching in Java Language Context #
 
 
-----------
-
-
 ## 1 Structure of the Dataset ##
 ### a. Layered Knowledge Graph (LKG): ###
 - Ontology Models (*.owl)
