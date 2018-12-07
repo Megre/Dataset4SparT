@@ -1,56 +1,79 @@
-Dataset for: Accurate Design Pattern Detection Based on Idiomatic Implementation Matching in Java Language Context
+# Dataset for: Accurate Design Pattern Detection Based on Idiomatic Implementation Matching in Java Language Context #
 
-1 Structure of the Dataset
-  -a.Layered Knowledge Graph (LKG):
-    Ontology Models (*.owl)
-    Inference Rules (Java.qrules, Java.StaticBehavior.qules)
-    Pattern Templates (Java.DesignPattern.qrules)
-    Description of Vocabularies.pdf
-  -b.Generated Ontologies:
-    The inferred ontologies generated for JHotDraw, JUnit, JRefactory, QuickUML, and PMD.    
-  -c.Evaluation Results:
-    Pattern Instances Detected by RaM, DPD, DPF and SparT.pdf
-    Statistics on Pattern Instances Detected by RaM, DPD, DPF and SparT.pdf
-    Statistics on Runtime Performance of SparT.pdf
-  -d.Screenshots of SparT
-    Fig.a Pattern Detection.png
-    Fig.b Ontology Browser.png
-    Fig.c SPARQL Query.png
-    Fig.d Ontology Trace.png   
-  Readme.txt (this file)
 
-2 How to Browse the Data?
-  The ".qrules" are plain text files, thus can be opened with your favorite text viewer.
-  The ".owl" files are text files that are saved as RDF/XML syntax. In particular, the Ontology Models in the Layered Knowledge Graph directory can be opened with Protégé (https://protege.stanford.edu) or your favorite text viewer. Protégé is recommended since it provides navigators and syntax highlighting. The ontologies in the Generated Ontologies directory can be opened with Protégé or your favorite text viewer. If opening with Protégé, please stop the reasoners since they may slow down your computer.
+----------
+
+
+## 1 Structure of the Dataset ##
+### a. Layered Knowledge Graph (LKG): ###
+- Ontology Models (*.owl)
+- Inference Rules (Java.qrules, Java.StaticBehavior.qules)
+- Pattern Templates (Java.DesignPattern.qrules)
+- Description of Vocabularies.pdf
+
+### b. Generated Ontologies: ###
+- The inferred ontologies generated for JHotDraw, JUnit, JRefactory, QuickUML, and PMD.    
+
+### c. Evaluation Results: ###
+- Pattern Instances Detected by RaM, DPD, DPF and SparT.pdf
+- Statistics on Pattern Instances Detected by RaM, DPD, DPF and SparT.pdf
+- Statistics on Runtime Performance of SparT.pdf
+
+### d. Screenshots of SparT ###
+- Fig.a Pattern Detection.png
+- Fig.b Ontology Browser.png
+- Fig.c SPARQL Query.png
+- Fig.d Ontology Trace.png   
+
+### Readme.txt (this file) ###
+
+
+## 2 How to Browse the Data? ##
+  The **".qrules"** are plain text files, thus can be opened with your favorite text viewer.
+
+  The **".owl"** files are text files that are saved as RDF/XML syntax. In particular, the Ontology Models in the Layered Knowledge Graph directory can be opened with **Protégé** (https://protege.stanford.edu) or your favorite text viewer. Protégé is recommended since it provides navigators and syntax highlighting. The ontologies in the Generated Ontologies directory can be opened with Protégé or your favorite text viewer. If opening with Protégé, please stop the reasoners since they may slow down your computer.
+
   As for instances detected by SparT, two ways to browse them are:
-  1) They are reported in "Pattern Instances Detected by RaM, DPD, DPF and SparT.pdf". In this way, it is easy to make a visual comparison with different approaches and instances;
-  2) They are also saved into the ontologies in the Generated Ontologies directory. Using Protégé, it is easy to navigate between linked individuals.
 
-3 Description of the Dataset
-3.1 Layered Knowledge Graph
+1. They are reported in "Pattern Instances Detected by RaM, DPD, DPF and SparT.pdf". In this way, it is easy to make a visual comparison with different approaches and instances;
+1. They are also saved into the ontologies in the Generated Ontologies directory. Using Protégé, it is easy to navigate between linked individuals.
+
+## 3 Description of the Dataset ##
+### 3.1 Layered Knowledge Graph ###
   The ".owl" files are ontology models developed with Protégé. An ontology model imports dependent ontology models in higher layers. 
+
   The inference rules and pattern templates (.qrules) are based on SPARQL update language. An inference file (.qrules) is attached to the ontology model that has the same file name prefix. Thus, the order of inference is sequenced by the dependency order of ontology models. 
+
   The pattern templates are encoded in "Java.DesignPattern.qrules". For readability, we commented the templates. A pattern instance is identified by a combination of key roles. As shown in the pattern templates, we join the names of key roles with SHA1 (Secure Hash Algorithm) signature to uniquely identify the combination. Key roles do not mean that other roles are not allowed or needed. In some cases, an instance is composed of one role of each key roles and multiple other roles.
+
   In "Description of Vocabularies.pdf", we provide a description of the vocabularies (ontology classes and properties) that reside in each ontology model. Some of these vocabularies are handled by vocabulary handlers, e.g. Interface, hasMethod and callsMethod that are extracted straightforward from the source code. The others are inferred, e.g. the representation of complex concepts and the generalization of relationships.
 
-3.2 Generated Ontologies
+### 3.2 Generated Ontologies ###
   The ontologies for each system contain:
-  1) The information extracted from the source code,
-  2) The inferred knowledge, and
-  3) The detection results, i.e. the pattern instances that are linked to relevant roles and operations.
+
+1. The information extracted from the source code,
+1. The inferred knowledge, and
+1. The detection results, i.e. the pattern instances that are linked to relevant roles and operations.
+
   The ontologies are automatically generated by the Ontology Generator taking the LKG as input, after which they are inferred by the inference engine. 
+
   The ontologies files are exported from the ontology store. As we encoded special characters (e.g. "@") into individual names for readability and search, the names are transformed to legal URI (Uniform Resource Identifier) before exporting (e.g. "%40" for "@").
 
-3.3 Evaluation Results
+### 3.3 Evaluation Results ###
   This directory contains:
-  1) A thorough investigation of pattern instances reported by RaM, DPD, DPF and SparT for each evaluated system and design pattern,
-  2) Statistics on investigated pattern instances for each approach, system and design pattern, and
-  3) Statistics on the runtime performance of SparT for each system and design pattern.
 
-3.4 Screenshots of SparT
+1. A thorough investigation of pattern instances reported by RaM, DPD, DPF and SparT for each evaluated system and design pattern,
+1. Statistics on investigated pattern instances for each approach, system and design pattern, and
+1. Statistics on the runtime performance of SparT for each system and design pattern.
+
+### 3.4 Screenshots of SparT ###
   This directory contains some screenshots of the design pattern detection subsystem of our web-based tool SparT.
   As shown in Fig.a, the LKG is constructed after the project is uploaded to SparT. It only needs to select a model in the interpreting layer and click "Recognize" to start the detection. All consequent processes are automatic. The detection results are stored in the ontologies as we provided in the Generated Ontologies directory of this dataset. SparT provides three ways to browse the ontologies, i.e. Ontology Browser (Fig.b), SPARQL Query (Fig.c) and Ontology Trace (Fig.d).
-  Ontology Browser provides the function to browse the hierarchy of the ontology model synthesized from the LKG and to search for individuals. It presents the data as linked triples from subject to object (forward) or from object to subject (backward).
-  SPARQL Query provides the functions to execute SPARQL queries and updates.
-  Ontology Trace provides the function to trace triples stepwise in both forward and backward direction. Initial triples are added from the listed ones of the Ontology Browser. New triples can be continually added to the Ontology Trace panel and linked to existing nodes.
-  In addition, the project tree on the right side (Fig.b) provides contextual functions according to the active work area on the middle, e.g. navigating to the source code viewer and coloring tree nodes.
+
+  **Ontology Browser** provides the function to browse the hierarchy of the ontology model synthesized from the LKG and to search for individuals. It presents the data as linked triples from subject to object (forward) or from object to subject (backward).
+
+  **SPARQL Query** provides the functions to execute SPARQL queries and updates.
+
+  **Ontology Trace** provides the function to trace triples stepwise in both forward and backward direction. Initial triples are added from the listed ones of the Ontology Browser. New triples can be continually added to the Ontology Trace panel and linked to existing nodes.
+
+  In addition, the **project tree** on the right side (Fig.b) provides contextual functions according to the active work area on the middle, e.g. navigating to the source code viewer and coloring tree nodes.
