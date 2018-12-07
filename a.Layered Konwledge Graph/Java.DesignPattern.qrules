@@ -1,0 +1,744 @@
+
+prefix ptn: <http://www.semanticweb.org/anonym/ontologies/2017/10/Pattern#>
+prefix sbh: <http://www.semanticweb.org/anonym/ontologies/2018/4/StaticBehavior#>
+prefix java: <http://www.semanticweb.org/anonym/ontologies/2017/6/Java#>
+prefix jsbh: <http://www.semanticweb.org/anonym/ontologies/2018/4/Java.StaticBehavior#>
+prefix jd: <http://www.semanticweb.org/anonym/ontologies/2017/11/Java.DesignPattern#>
+
+
+## Creational
+
+# Factory Method
+# key roles: Creator (?c), ConcreteCreator (?cc)
+# required operations: FactoryMethod (?ccfm, ?cfm)
+insert {
+  ?dp a ptn:FactoryMethod.
+  ?p a ptn:ProRole. ?cp a ptn:ConcProRole.
+  ?c a ptn:CreRole. ?cc a ptn:ConcCreRole.
+  ?ccfm a ptn:ConcCreFMOper. ?cfm a ptn:CreFMOper.
+  ?dp ptn:containsRole ?p; ptn:containsRole ?c; 
+    ptn:containsRole ?cp; ptn:containsRole ?cc;
+    ptn:containsOper ?ccfm; ptn:containsOper ?cfm
+}
+where {
+  { # interface creator
+    ?cc java:hasMethod ?ccfm; java:realizes ?c.
+    ?ccfm jsbh:instantiatesClass ?cp; java:returnTypeIs ?p; java:returnExp ?re.
+    filter regex(?re, "^new ")
+    ?cp java:isA ?p.
+    ?c java:hasMethod ?cfm.
+    ?cfm java:localNameIs [^java:localNameIs ?ccfm]; java:methodSig [^java:methodSig ?ccfm]. # overriding
+  } union { # abstract class creator
+    ?cc java:hasMethod ?ccfm; java:inherits ?c.
+    ?ccfm jsbh:instantiatesClass ?cp; java:returnTypeIs ?p; java:returnExp ?re.
+    filter regex(?re, "^new ")
+    ?cp java:isA ?p.
+    ?c java:hasMethod ?cfm.
+    ?cfm java:localNameIs [^java:localNameIs ?ccfm]; java:methodSig [^java:methodSig ?ccfm]; java:hasModifier "abstract".
+    
+    ?p java:isInLocalPackage true.
+    ?cp java:isInLocalPackage true.
+  }
+  
+  bind(uri(concat(str(jd:), "dp.FactoryMethod.", sha1(concat(str(?c), str(?cc))))) as ?dp)
+};
+
+
+# Abstract Factory
+# key roles: AbstractFactory (?af), AbstractProduct (?ap)
+# required operations: CreateProduct (?cp)
+insert {
+  ?dp a ptn:AbstractFactory.
+  ?af a ptn:AbsFacRole. ?ap a ptn:AbsProRole.
+  ?cp a ptn:AbsFacCPOper.
+  ?dp ptn:containsRole ?af; ptn:containsRole ?ap;
+    ptn:containsOper ?cp
+}
+where {
+  { ?af a java:Interface; java:hasMethod ?cp } union 
+  { ?af a java:Class; java:hasMethod ?cp. ?cp java:hasModifier "abstract" }
+  ?cp java:localNameIs ?cpln.
+  ?cf java:isA ?af; java:hasMethod ?ccp1; java:hasMethod ?ccp2.
+  ?ccp1 java:localNameIs ?cpln; java:methodSig [^java:methodSig ?cp].
+  ?ccp2 java:localNameIs ?cpln; java:methodSig [^java:methodSig ?cp].
+  filter(?ccp1!=?ccp2)
+  
+  ?ccp1 jsbh:instantiatesClass ?p1.
+  ?ccp2 jsbh:instantiatesClass ?p2.
+  filter(?p1!=?p2)
+
+  ?p1 java:isA ?ap.
+  ?p2 java:isA ?ap.
+  ?ap java:isInLocalPackage true.
+
+  bind(uri(concat(str(jd:), "dp.AbstractFactory.", sha1(concat(str(?af), str(?ap))))) as ?dp)
+};
+
+
+# Builder
+# key roles: Director (?dire), Builder (?b)
+# required operations: Construct (?cns), BuildPart (?bp)
+insert {
+  ?dp a ptn:Builder.
+  ?dire a ptn:DirectorRole. ?b a ptn:BuilderRole.
+  ?cns a ptn:DireConsOper. ?bp a ptn:BuiBPOper.
+  ?dp ptn:containsRole ?dire; ptn:containsRole ?b;
+      ptn:containsOper ?cns; ptn:containsOper ?bp
+}
+where {
+  ?dire java:hasMethod ?cns.
+  ?cns jsbh:callsMethod ?bp.
+  ?bp java:localNameIs ?bpln.
+
+  { ?b java:hasMethod ?bp. ?bp jsbh:instantiatesClass []  } union 
+  { ?b java:hasMethod ?bp. ?cb java:isA ?b; java:hasMethod ?cbp.  
+    ?cbp java:localNameIs ?bpln; java:methodSig [^java:methodSig ?bp]; jsbh:instantiatesClass [].
+    ?b a java:Interface; java:isInLocalPackage true
+   }
+
+  filter(?dire!=?b)
+  filter regex(?bpln, "[Bb]uild")
+
+  bind(uri(concat(str(jd:), "dp.Builder.", sha1(concat(str(?dire), str(?b))))) as ?dp)
+};
+
+
+# Prototype
+# key roles: Client (?clt), Prototype (?p)
+# required operations: Clone (?c)
+insert {
+  ?dp a ptn:Prototype. 
+  ?p a ptn:ProtoRole. ?clt a ptn:ProtoClientRole.
+  ?c a ptn:ProtoCloneOper.
+  ?dp ptn:containsRole ?p; ptn:containsRole ?clt;
+    ptn:containsOper ?c.
+}
+where {
+  ?p a java:Interface.
+  ?p java:hasMethod ?c.
+  filter regex(str(?c), "[Cc]lone") 
+
+  [] jsbh:methodCaller [^java:hasMethod ?cli]; jsbh:methodCalled ?c; jsbh:invocExp ?fn.
+  
+  ?clt java:hasMethod [jsbh:callsMethod ?c].
+  optional { ?cp java:isA ?p; java:hasMethod [java:localNameIs [^java:localNameIs ?c]; java:methodSig [^java:methodSig ?c]] } # ConcretePrototype role is optional here
+
+  bind(uri(concat(str(jd:), "dp.Prototype.", sha1(concat(str(?p), str(?clt))))) as ?dp)
+};
+
+
+# Singleton
+# key roles: Singleton (?s)
+# required operations: Instance (?ins)
+insert {
+  ?dp a ptn:Singleton.
+  ?s a ptn:SinRole.
+  ?ins a ptn:SinInsOper.
+  ?dp ptn:containsRole ?s;
+    ptn:containsOper ?ins
+}
+where {
+  ?s a java:Class; java:hasField ?fld.
+  ?fld java:fieldTypeIs ?s; java:hasModifier "static".
+  ?s java:hasMethod ?ins.
+  ?ins java:returnTypeIs ?s; java:hasModifier "static"
+
+  bind(uri(concat(str(jd:), "dp.Singleton.", sha1(str(?s)))) as ?dp)
+};
+
+
+
+## Structural
+
+# Adapter
+# key roles: Adapter (?ter), Adaptee (?tee)
+# required operations: Request (?terReq), SpecificRequest (?teeReq)
+insert {
+  ?dp a ptn:Adapter.
+  ?ter a ptn:AdapterRole. ?tee a ptn:AdapteeRole.
+  ?terReq a ptn:AdapterReqOper. ?teeReq a ptn:AdapteeReqOper.
+  ?dp ptn:containsRole ?ter; ptn:containsRole ?tee;
+    ptn:containsOper ?terReq; ptn:containsOper ?teeReq
+}
+where {
+
+  ?ter java:hasFieldType ?tee.
+  { ?tee java:hasMethod ?teeReq } union 
+  { ?tee java:isA [java:hasMethod ?teeReq] }
+  ?terReq jsbh:callsMethod ?teeReq.
+
+  ?ter java:hasMethod ?terReq.  
+  filter exists {
+    ?ter java:isA ?tar. # Target role
+    filter(?tar!=java:java.lang.Object)
+    ?tar java:hasMethod ?tarReq.
+    ?tarReq java:localNameIs [^java:localNameIs ?terReq].
+    filter(?tee!=?tar)
+  } 
+
+  # ?ter aggregates ?tee, in which ?f is a field of ?ter whose type is ?tee
+  ?ter java:hasField ?f.
+  ?f java:fieldTypeIs ?tee; java:localNameIs ?fn.  
+
+  # filters out ?tee whose name indicates other patterns
+  filter not exists { filter regex(str(?fn), "prototype|builder|state|component|flyweights|realSubject|successor|receiver|mediator|memento|observers?|strategy", "i") }
+  
+  # filters out ?tee whose name indicates explicit relationship with ?ter 
+  filter not exists { filter regex(?fn, "ancestor|descendant|parent|child(ren)?|owner|pioneer", "i") }
+
+  # ?ter and ?tee does not realize the same non-JDK interface since ?ter is the delegate of ?tee
+  filter not exists { ?ter java:isA ?inter. ?tee java:isA ?inter. ?inter a java:Interface. filter not exists { filter regex(str(?inter), concat(str(java:), "java")) } }
+
+  # ?terReq invokes ?teeReq in which the invoking expression is ?f
+  filter exists { 
+    [] jsbh:methodCaller ?terReq; jsbh:methodCalled ?teeReq; jsbh:invocExp ?e.
+    filter regex(?e, concat(?fn, "$"))
+  }
+
+  filter exists { 
+    { # initializes ?f in the constructor with an argument passed in
+      ?ter java:hasMethod ?c.  
+      filter not exists { ?c java:hasModifier "private" }
+      ?c java:isConstructor true; java:hasParam [java:paramTypeIs ?tee; java:localNameIs ?pn].
+      ?c jsbh:containsExp [jsbh:leftExp ?le; jsbh:rightExp ?pn].
+      filter(?le=?fn || ?le=concat("this.", ?fn))
+      # filter out possible ?tee as a temporary member variable of ?ter, who appears on the left-hand side of an assignment
+      filter not exists { 
+        ?ter java:hasMethod ?m. 
+        filter not exists { { ?m java:isConstructor true } union { ?m java:hasParamType ?tee } }. 
+        ?m jsbh:containsExp [jsbh:leftExp ?_le; jsbh:rightExp ?re]
+        filter((?_le=?fn || ?_le=concat("this.", ?fn)) && ?re!="null")
+      }
+    } union { # initializes ?f only in the constructor
+      ?ter java:hasMethod ?c.  
+      filter not exists { ?c java:hasModifier "private" }
+      ?c java:isConstructor true; jsbh:containsExp [jsbh:leftExp ?le; jsbh:rightExp ?re].
+      filter((?le=?fn || ?le=concat("this.", ?fn)) && ?re!="null")
+      filter not exists { { ?c java:hasParam [java:paramTypeIs ?tee] } union { ?c java:hasParam [java:paramTypeIs [^java:isA ?tee]] } }
+    } union { # initializes ?f in a method that is invoked by the constructor
+      ?ter java:hasMethod ?init; java:hasMethod [java:isConstructor true; jsbh:callsMethod ?init].
+      ?init java:localNameIs ?ln.
+      ?init jsbh:containsExp [jsbh:leftExp ?le; jsbh:rightExp ?re].
+      filter((?le=?fn || ?le=concat("this.", ?fn)) && ?re!="null")
+    } union { # instantiates ?tee in the constructor
+      ?ter java:hasMethod ?c.  
+      filter not exists { ?c java:hasModifier "private" }
+      ?c java:isConstructor true
+      { ?c jsbh:instantiatesClass ?tee } union 
+      { ?c jsbh:instantiatesClass [java:isA ?tee] }
+      ?c jsbh:containsExp [jsbh:leftExp ?le; jsbh:rightExp ?pn].
+      filter(?le=?fn || ?le=concat("this.", ?fn))
+      filter regex(?pn, "^new ")
+      filter not exists { ?c java:hasParamType ?tee }
+      #filter not exists { ?ter java:hasMethod [java:returnTypeIs ?tee] }
+    } union {  # initializes ?f in a non-constructor method
+      ?ter java:hasMethod ?init.
+      ?init java:hasParam [java:paramTypeIs ?tee; java:localNameIs ?pn].
+      ?init jsbh:containsExp [jsbh:leftExp ?le; jsbh:rightExp ?pn]
+      filter(?le=?fn || ?le=concat("this.", ?fn))
+      filter not exists { { ?init java:hasModifier "private" } union { ?init java:isConstructor true } }
+      filter not exists {
+        ?ter java:hasMethod ?m.
+        filter(?m!=?init)
+        ?m jsbh:containsExp [jsbh:leftExp ?_le; jsbh:rightExp ?_re]
+        filter((?_le=?fn || ?_le=concat("this.", ?fn)) && ?_re!="null")
+      }
+    } union { # initializes ?f in a method whose name indicates that it is an initialization method
+      ?ter java:hasMethod ?init.
+      ?init java:localNameIs ?ln.
+      filter regex(?ln, "^(init|start|begin|connect|open)", "i")
+      { 
+        ?init jsbh:containsExp [jsbh:leftExp ?le; jsbh:rightExp ?re].
+        filter((?le=?fn  || ?le=concat("this.", ?fn)) && ?re!="null") 
+      } union {
+        ?init jsbh:callsMethod ?_init.
+        ?ter java:hasMethod ?_init.
+        ?_init jsbh:containsExp [jsbh:leftExp ?le; jsbh:rightExp ?re].
+        filter((?le=?fn  || ?le=concat("this.", ?fn)) && ?re!="null")
+      } 
+    } union { # instantiates ?f in a non-constructor method
+      ?ter java:hasMethod ?init.
+      ?init java:isConstructor false; jsbh:instantiatesClass ?tee; jsbh:containsExp [jsbh:leftExp ?le; jsbh:rightExp ?re].
+      filter((?le=?fn || ?le=concat("this.", ?fn)) && ?re!="null")
+      filter exists {
+        ?ter java:hasMethod ?m.
+        ?m java:isConstructor false.      
+        filter(?m!=?init)
+        [] jsbh:methodCaller ?m; jsbh:methodCalled [^java:hasMethod ?tee]; jsbh:invocExp ?inv.
+        filter(?inv=?fn || ?inv=concat("this.", ?fn))
+      } 
+    } union { # instantiates ?f providing an initializer
+      ?ter java:hasField [java:fieldTypeIs ?tee; jsbh:fieldIniter ?fi]
+      filter regex(?fi, "^new ")
+    }
+  }
+
+  # Not all requests are forwarded to ?tee, i.e. ?ter usually provides additional functions
+  filter exists {
+    { # ?ter is a Command semantically
+      ?ter java:hasMethod ?m.
+      ?m java:hasModifier "public"    
+      filter regex(str(?ter), "Command$")
+      filter not exists { { ?m java:isConstructor true } union { ?m jsbh:callsMethod [^java:hasMethod ?tee] } }
+    } union { # ?ter is not a Command semantically
+      ?ter java:hasMethod ?m.
+      ?m java:hasModifier "public"
+      filter not exists { filter regex(str(?ter), "Command$") }
+    }
+  }
+ 
+  # semantically filters out other patterns
+  filter not exists {
+    {
+      ?_ter java:hasMethod ?terReq.
+      ?terReq java:localNameIs ?_ln
+      filter regex(str(?_ter), "Visitor$")
+      filter regex(?_ln, "[Vv]isit") 
+    } union {
+      ?_ter java:hasMethod ?terReq.
+      ?terReq java:localNameIs ?_ln
+      filter regex(str(?_ter), "Command$")
+      filter regex(?_ln, "[Ee]xecute") 
+    } union {
+      ?_tee java:hasMethod ?teeReq.
+      ?teeReq java:returnTypeIs [java:isA ?_tee]; java:localNameIs ?_ln.
+      filter regex(?_ln, "[Cc]lone") 
+    } 
+  }
+
+  bind(uri(concat(str(jd:), "dp.Adapter.", sha1(concat(str(?ter), str(?tee))))) as ?dp)
+};
+
+
+# Bridge
+# key roles: Abstraction (?abs), Implementor (?imp)
+# required operations: Operation (?absOper), OperationImpl (?impOper)
+insert {
+  ?dp a ptn:Bridge.
+  ?abs a ptn:AbsRole. ?imp a ptn:ImpRole.
+  ?absOper a ptn:AbsOper. ?impOper a ptn:ImpOper.
+  ?ptn ptn:containsRole ?abs; ptn:containsRole ?impRole;
+    ptn:containsOper ?absOper; ptn:containsOper ?impOper
+}
+where {
+  ?abs java:hasField [java:fieldTypeIs ?imp; java:localNameIs ?fn]; java:hasMethod ?absOper.
+  ?imp java:hasMethod ?impOper.
+  ?absOper java:hasModifier "public"; jsbh:callsMethod ?impOper.
+  ?absOper jsbh:containsExp [jsbh:leftExp ?fn].
+  
+   filter exists { 
+     ?rabs java:extends ?abs.
+     ?cimp java:extends|java:implements ?imp
+   }
+
+  # It does not exists different abstractions which do not in a hierarchy but depend on the same implementor
+  filter not exists {
+    ?_abs java:hasFieldType ?imp.
+    filter(?_abs!=?abs)
+    filter not exists { 
+      { ?_abs java:isA|^java:isA ?abs } union 
+      { ?_abs java:isA ?p. ?abs java:isA ?p. 
+        filter not exists { filter regex(str(?p), concat("^", str(java:), "java\\.")) } } 
+    }
+  }
+
+  bind(uri(concat(str(jd:), "dp.Bridge.", sha1(concat(str(?abs), str(?imp))))) as ?dp)
+};
+
+
+# Composite
+# key roles: Component (?comp), Composite (?cmps)
+# required operations: Operation (?compOper, ?cmpsOper)
+insert {
+  ?dp a ptn:Composite.
+  ?comp a ptn:CompRole. ?cmps a ptn:CmpsRole. ?leaf a ptn:LeafRole.
+  ?compOper a ptn:CompOper. ?cmpsOper a ptn:CmpsOper. ?leafOper a ptn:LeafOper.
+  ?dp ptn:containsRole ?comp; ptn:containsRole ?cmps; ptn:containsRole ?leaf.
+  ?dp ptn:containsOper ?compOper; ptn:containsOper ?cmpsOper; ptn:containsOper ?leafOper
+} where {
+  ?cmps java:aggregates ?comp; java:isA ?comp; java:hasMethod ?cmpsOper.
+  filter (?cmps!=?comp)
+  
+  ?cmpsOper jsbh:callsMethod ?compOper.
+  ?comp java:hasMethod ?compOper.
+  ?compOper java:localNameIs ?oper.
+  ?cmpsOper java:localNameIs ?oper.
+  
+  optional { # ?leaf and ?leafOper are optional
+    ?leaf java:isA ?comp; java:hasMethod ?leafOper.
+    ?leafOper java:localNameIs ?oper
+    filter(?leaf!=?cmps)
+  }
+
+  bind(uri(concat(str(jd:), "dp.Composite.", sha1(concat(str(?comp), str(?cmps))))) as ?dp)
+};
+
+
+# Decorator
+# key roles: Component (?comp), Decorator (?dec)
+# required operations: Operation (?compOper, decOper)
+insert {
+  ?dp a ptn:Decorator.
+  ?comp a ptn:DecCompRole. ?dec a ptn:DecRole.
+  ?compOper a ptn:DecCompOper. ?decOper a ptn:DecOper.
+  ?dp ptn:containsRole ?comp; ptn:containsRole ?dec
+} 
+where {
+  ?dec java:isA ?comp.
+  ?dec java:hasFieldType ?comp; java:hasMethod ?decOper.
+  ?comp java:hasMethod ?compOper.
+  ?decOper jsbh:callsMethod ?compOper.
+  ?decOper java:localNameIs [^java:localNameIs ?compOper]; java:methodSig [^java:methodSig ?compOper].
+
+  bind(uri(concat(str(jd:), "dp.Decorator.", sha1(concat(str(?comp), str(?dec))))) as ?dp)
+};
+
+
+# Façade
+# It is not supported, but it can be supported, e.g. in given application domain or with system design information.
+# This template is an example that simply matches the names. It detects one instance of PMD (net.sourceforge.pmd.symboltable.SymbolFacade). However, it does not satisfy the definition of DesignPattern since ?dp does not contain any operation.
+insert {
+  ?dp a ptn:Facade.
+  ?f a ptn:FacadeRole.
+  ?dp ptn:containsRole ?f
+}
+where {
+  { ?f a java:Interface } union { ?f a java:Class }
+  ?f java:localNameIs ?ln.
+  filter regex(?ln, "Facade")
+
+  bind(uri(concat(str(jd:), "dp.Facade.", sha1(str(?f)))) as ?dp)
+};
+
+
+# Flyweight
+# key roles: FlyweightFactory (?ff), Flyweight (?f)
+# required operations: GetFlyweight (?gf)
+insert {
+  ?dp a ptn:Flyweight.
+  ?ff a ptn:FlwFacRole. ?f a ptn:FlwRole.
+  ?gf a ptn:GetFlwOper.
+  ?dp ptn:containsRole ?ff; ptn:containsRole ?f;
+    ptn:containsOper ?gf
+}
+where {
+  ?ff java:aggregates ?f.
+  filter exists { { ?f a java:AbstractClass } union { ?f a java:Interface } }
+  ?ff java:hasMethod ?gf.
+  ?gf java:returnTypeIs ?f; jsbh:instantiatesClass ?f
+  filter not exists { ?gf java:hasModifier "private" }
+
+  bind(uri(concat(str(jd:), "dp.Flyweight.", sha1(concat(str(?ff), str(?f))))) as ?dp)
+}; 
+
+
+# Proxy
+# key roles: Proxy (?p), RealSubject (?rs)
+# required operations: Request (?rsr, ?pr)
+insert {
+  ?dp a ptn:Proxy.
+  ?p a ptn:ProxyRole. ?rs a ptn:RealSubRole. ?s a ptn:PrxSubRole.
+  ?pr a ptn:PrxReqOper. ?rsr a ptn:RealSubOper.
+  ?dp ptn:containsRole ?p; ptn:containsRole ?rs; ptn:containsRole ?s;
+    ptn:containsOper ?pr; ptn:containsOper ?rsr
+}
+where {
+  ?p java:isA ?s.
+  ?s java:isInLocalPackage true.
+  ?rs java:isA ?s; java:hasMethod ?rsr.
+  ?p java:hasField ?fld; java:hasMethod ?pr.
+  ?fld java:fieldTypeIs ?rs; java:localNameIs ?rsln.
+  filter exists {
+    { ?p java:hasMethod ?m. ?m jsbh:instantiatesClass ?rs. } union
+    { ?fld jsbh:fieldIniter ?fi. filter regex(?fi, "new ") } 
+  }
+
+  ?r java:localNameIs ?prln.
+  ?rsr java:localNameIs ?prln; java:methodSig [^java:methodSig ?pr].
+  ?pr jsbh:callsMethod ?rsr.
+  filter exists { [] jsbh:methodCaller ?pr; jsbh:methodCalled ?rsr; jsbh:invocExp ?rsln }
+  
+  bind(uri(concat(str(jd:), "dp.Proxy.", sha1(concat(str(?p), str(?rs))))) as ?dp)
+};
+
+
+
+## Behavioral
+
+# Interpreter
+# key roles: AbstractExpression (?ae)
+# required operations: Interpret (?intr)
+insert {
+  ?dp a ptn:Interpreter.
+  ?ae a ptn:AbsExpRole. ?ne a ptn:NonTerExpRole.
+  ?intr a ptn:InterOper.
+  ?dp ptn:containsRole ?ae; ptn:containsRole ?ne;
+    ptn:containsOper ?intr
+}
+where {
+  ?ne java:aggregates ?ae.
+  filter exists { { ?ae a java:AbstractClass } union { ?ae a java:Interface } }
+  ?ne java:isA ?ae.
+  ?ae java:hasMethod ?intr.
+  ?intr java:localNameIs ?ln.
+  filter regex(?ln, "[Ii]nterpret")
+
+  bind(uri(concat(str(jd:), "dp.Interpreter.", sha1(str(?ae)))) as ?dp)
+};
+
+
+# Template Method
+# key roles: AbstractClass (?ac)
+# required operations: TemplateMethod (?tm), PrimitiveOperation (?po)
+insert {
+  ?dp a ptn:TemplateMethod.
+  ?ac a ptn:AbsClsRole.
+  ?tm a ptn:TmpMtdOper. ?po a ptn:PrimOper.
+  ?dp ptn:containsRole ?ac;
+    ptn:containsOper ?tm; ptn:containsOper ?po
+}
+where {
+  ?ac java:hasMethod ?tm; java:hasMethod ?po.
+  ?po java:hasModifier "abstract".
+  ?tm jsbh:callsMethod ?po.
+
+  bind(uri(concat(str(jd:), "dp.TemplateMethod.", sha1(str(?ac)))) as ?dp)
+};
+
+
+# ChainOfResponsibility
+# key roles: Handler (?h)
+# required operations: HandleRequest (?hr)
+insert {
+  ?dp a ptn:ChainOfResponsibility.
+  ?h a ptn:HandlerRole.
+  ?hr a ptn:HdlrReqOper.
+  ?dp ptn:containsRole ?h;
+    ptn:containsOper ?hr
+}
+where {
+  ?h java:hasFieldType ?h; a java:AbstractClass.
+  ?h java:hasMethod ?hr.
+  ?hr java:localNameIs ?ln.
+  filter regex(?ln, "[Hh]andle")
+  [] java:isA ?h
+
+  bind(uri(concat(str(jd:), "dp.TemplateMethod.", sha1(str(?h)))) as ?dp)
+};
+
+
+# Command
+# key roles: ConcreteCommand (?cc)
+# required operations: Execute (?exe), Action (?a)
+insert {
+  ?dp a ptn:Command.
+  ?c a ptn:CmdRole. ?cc a ptn:ConcCmdRole. ?rec a ptn:RecRole.
+  ?exe a ptn:ConcCmdExeOper. ?a a ptn:RecActionOper.
+  ?dp ptn:containsRole ?cc; ptn:containsRole ?c; ptn:containsRole ?rec;
+    ptn:containsOper ?exe; ptn:containsOper ?a
+}
+where {
+  ?cc java:hasMethod ?exe; java:hasField ?r.
+  ?r java:fieldTypeIs ?rc; java:localNameIs ?rn.
+  ?exe jsbh:callsMethod ?a.
+  ?rec java:hasMethod ?a.
+  filter exists { 
+    [] jsbh:methodCaller ?exe; jsbh:methodCalled ?a; jsbh:invocExp ?rn.    
+  }
+  ?cc java:isA ?c.
+
+  filter(?c!=java:java.lang.Object)
+  filter regex(str(?exe), "[Ee]xecute")
+
+  bind(uri(concat(str(jd:), "dp.Command.", sha1(str(?cc)))) as ?dp)
+};
+
+# Iterator
+# key roles: Iterator (?iter), ConcreteIterator (?ci)
+# required operations: CreateIterator (?cre)
+insert {
+  ?dp a ptn:Iterator.
+  ?iter a ptn:IterRole. ?ci a ptn:ConcIterRole. ?cagg a ptn:ConcAggRole.
+  ?cre a ptn:CreIterOper.
+  ?dp ptn:containsRole ?iter; ptn:containsRole ?ci; ptn:containsRole ?cagg;
+    ptn:containsOper ?cre
+}
+where {
+  ?cagg java:hasMethod ?cre.
+  ?cre jsbh:instantiatesClass ?ci.
+  { ?ci java:isA java:java.util.Iterator. ?cre java:returnTypeIs java:java.util.Iterator } union
+  { ?ci java:isA java:java.util.Enumeration. ?cre java:returnTypeIs java:java.util.Enumeration }
+  filter not exists { ?cre java:hasModifier "private" }
+  optional { ?ci java:isA ?iter. ?iter a java:Interface }
+
+  bind(uri(concat(str(jd:), "dp.Iterator.", sha1(concat(str(?iter), str(?ci))))) as ?dp)
+};
+
+
+# Mediator
+# key roles: Mediator (?m), Colleague (?c)
+# required operations: ColleagueOperation (?oper)
+insert {
+  ?dp a ptn:Mediator.
+  ?m a ptn:MedRole. ?c a ptn:CollRole.
+  ?oper a ptn:CollOper.
+  ?dp ptn:containsRole ?m; ptn:containsRole ?c;
+    ptn:containsOper ?oper
+}
+where {
+  ?cm java:isA ?m
+  filter exists { { ?m a java:AbstractClass } union { ?m a java:Interface } }
+  ?cm java:hasFieldType ?cc.
+  ?cc java:isA ?c.
+  ?c a java:AbstractClass; java:hasFieldType ?m; java:hasMethod ?oper.
+  ?oper jsbh:callsMethod [^java:hasMethod ?m]
+  filter exists { ?_cc java:isA ?c. filter(?_cc!=?cc) }
+
+  bind(uri(concat(str(jd:), "dp.Mediator.", sha1(concat(str(?m), str(?c))))) as ?dp)
+};
+
+# Memento
+# key roles: Originator (?o), Memento (?m)
+# required operations: SetMemento (?sm), CreateMemento (?cm),  GetState (?gs)
+insert {
+  ?dp a ptn:Memento.
+  ?o a ptn:OriRole. ?m a ptn:MmnRole.
+  ?sm a ptn:SetMmnOper. ?cm a ptn:CreMmnOper. ?gs a ptn:GetStaOper.
+  ?dp ptn:containsRole ?o; ptn:containsRole ?m;
+    ptn:containsOper ?sm; ptn:containsOper ?cm; ptn:containsOper ?gs
+}
+where {
+  ?o java:hasMethod ?cm; java:hasField [java:fieldTypeIs ?os; java:localNameIs ?osln].
+  ?cm jsbh:instantiatesClass ?m; java:returnTypeIs ?m.
+  filter(?o!=?m)
+  ?m java:hasFieldType ?os; java:hasMethod ?gs.
+  ?gs java:returnTypeIs ?os.
+  ?o java:hasMethod ?sm.
+  ?sm jsbh:callsMethod ?gs; jsbh:containsExp [jsbh:leftExp ?le].
+  filter(?le=?osln || ?le=concat("this.", ?osln))
+
+  bind(uri(concat(str(jd:), "dp.Memento.", sha1(concat(str(?m), str(?o))))) as ?dp)
+};
+
+
+
+# Observer
+# key roles: Subject (?s), Observer (?o)
+# required operations: Attach (?att), Notify (?n), Update (?u)
+insert {
+  ?dp a ptn:Observer.
+  ?s a ptn:SubRole. ?o a ptn:ObsRole.
+  ?n a ptn:NotiOper. ?u a ptn:UpdOper. ?att a ptn:AttOper.
+  ?dp ptn:containsRole ?s; ptn:containsRole ?o;
+    ptn:containsOper ?n; ptn:containsOper ?u; ptn:containsOper ?att
+}
+where { 
+  ?s java:aggregates ?o; java:hasMethod ?n.
+  { ?o a java:Class; java:hasModifier "abstract" } union { ?o a java:Interface }
+  ?o java:hasMethod ?u.
+  [] jsbh:methodCaller ?n; jsbh:methodCalled ?u; java:isInLoop true.
+  ?s java:hasMethod ?att. ?att java:hasParamType ?o.
+  filter not exists { ?att java:hasModifier "private" }
+
+  filter(?s!=?o)
+  filter not exists { 
+    { ?s java:isA ?o } union 
+    { ?s java:isA ?p. ?o java:isA ?p. ?p a java:Class. filter(?p!=java:java.lang.Object) } 
+  }
+
+  bind(uri(concat(str(jd:), "dp.Observer.", sha1(concat(str(?s), str(?o))))) as ?dp)
+};
+
+
+# State / Strategy
+# key roles: Context (?c), State/Strategy (?s)
+# required operations: Request (?r), Handle (?hd)
+insert {
+  ?dp a ptn:State.
+  ?c a ptn:ContRole. ?s a ptn:StaRole.
+  ?r a ptn:StaReqOper. ?hd a ptn:StaHandleOper.
+  ?dp ptn:containsRole ?c; ptn:containsRole ?s;
+    ptn:containsOper ?r; ptn:containsOper ?hd
+}
+where {
+  ?c java:hasField ?fld; java:localNameIs ?cln.
+  ?fld java:fieldTypeIs ?s; java:localNameIs ?fn.
+  ?c java:hasMethod ?r.
+  ?r jsbh:callsMethod ?hd; java:localNameIs ?rln.
+  ?s java:hasMethod ?hd.
+  filter not exists { ?r java:hasModifier "private" }
+  filter exists { 
+    { ?s a java:Interface; ^java:implements [] } union 
+    { ?s a java:Class; ^java:extends [] }
+  }  
+  
+  filter(?c!=?s)
+  filter not exists { ?c java:isA ?s }
+  filter not exists { ?s java:isA ?c }
+
+  filter exists {
+    { # The invoking expression is ?fld
+      [] jsbh:methodCaller ?r; jsbh:methodCalled ?hd; jsbh:invocExp ?exp.
+      filter(?fn=?exp || ?fn=concat("this.", ?exp)) 
+    } union
+    { # The invoking expression is a method whose return type is ?s
+      [] jsbh:methodCaller ?r; jsbh:methodCalled ?hd; jsbh:invocExp ?exp.
+      filter exists { 
+        ?c java:hasMethod ?_r. ?_r java:returnTypeIs ?s.
+        filter(?_r=uri(concat(str(?c), ".", replace(?exp, "\\(\\)", ""))))
+      }
+    }
+  }
+
+  # semantically filters out other patterns
+
+  filter not exists {
+    filter regex(?fn, "(builder|prototype|adaptee|impl?|component|command|realSubject|receiver|subject|singleton|factory|listener)$", "i")
+  }
+
+  filter not exists {
+    filter regex(?fn, "(ancestor|descendant|parent|child(ren)?|owner|pioneer)$", "i")
+  }
+
+  filter not exists {
+    filter regex(?cln, "(adapter|command)$", "i")
+    filter not exists { ?c java:hasFieldType ?_s. filter(?_s!=?s)  }
+  }
+
+  filter not exists {
+    ?c java:hasMethod ?exe.
+    ?exe java:localNameIs ?eln
+    filter regex(?cln, "command$", "i")
+    filter regex(?eln, "execute", "i")
+  }
+
+  bind(uri(concat(str(jd:), "dp.State.Strategy.", sha1(concat(str(?c), str(?s))))) as ?dp)
+};
+
+
+# Visitor
+# key roles: Visitor (?v), Element (?e)
+# required operations: Accept (?acc), VisitConcreteElement (?ve)
+insert {
+  ?dp a ptn:Visitor.
+  ?v a ptn:VisRole. ?e a ptn:EleRole.
+  ?acc a ptn:AccOper. ?ve a ptn:VisConcEleOper. ?os a ptn:ObjStruRole.
+  ?dp ptn:containsRole ?v; ptn:containsRole ?e; ptn:containsRole ?os;
+    ptn:containsOper ?acc; ptn:containsOper ?ve
+}
+where {
+  ?v a java:Interface; java:hasMethod ?ve.
+  ?ve java:localNameIs ?veln.
+  filter regex(?veln, "[Vv]isit").
+ 
+  { ?e a java:Interface } union { ?e a java:Class; java:hasModifier "abstract" }
+  ?e java:hasMethod ?acc.
+  ?acc java:hasParamType ?v; java:localNameIs ?accln.
+  filter regex(?accln, "[Aa]ccept")
+  
+  # ?os is optional
+  optional { { ?os java:aggregates ?e } union { ?os java:hasFieldType [java:arrayOf ?e] } }
+
+  bind(uri(concat(str(jd:), "dp.Visitor.", sha1(concat(str(?v), str(?e))))) as ?dp)
+};
+

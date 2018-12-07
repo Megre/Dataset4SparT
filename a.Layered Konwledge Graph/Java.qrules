@@ -1,0 +1,12 @@
+
+prefix java: <http://www.semanticweb.org/anonym/ontologies/2017/6/Java#>
+
+insert { ?x a java:Class } where { { ?x a java:NormalClass } union { ?x a java:AbstractClass } };
+insert { ?x java:isConstructor false } where { [] a java:Class; java:hasMethod ?x. filter not exists { ?x java:isConstructor true } };
+insert { ?x java:returnTypeIs "void" } where { [] java:hasMethod ?x. filter not exists { ?x java:returnTypeIs [] } };
+insert { ?x java:inherits ?y. ?x java:isA ?y. ?x java:isEA ?y }  where { ?x java:extends+ ?y };
+insert { ?x java:realizes ?y. ?x java:isA ?y. ?x java:isEA ?y } where { ?x java:implements/java:extends* ?y };
+insert { ?x java:isA ?y. ?x java:isEA ?y } where { ?x java:extends+/java:implements ?y };
+insert { ?x java:isEA ?x } where { { ?x a java:Class } union { ?x a java:Interface } };
+
+insert { ?x java:isInLocalPackage true } where { ?x java:inPackage [a java:LocalPackage] };

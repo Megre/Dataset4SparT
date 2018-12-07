@@ -1,0 +1,43 @@
+
+prefix sbh: <http://www.semanticweb.org/anonym/ontologies/2018/4/StaticBehavior#>
+prefix java: <http://www.semanticweb.org/anonym/ontologies/2017/6/Java#>
+prefix jsbh: <http://www.semanticweb.org/anonym/ontologies/2018/4/Java.StaticBehavior#>
+
+insert{ 
+  ?x java:aggregates ?y.
+  ?agg java:aggX ?x; java:aggY ?y; java:aggAdd ?m
+}
+where{
+  { ?x java:hasFieldType ?cntr. filter regex(str(?cntr), "java\\.util\\..*(List|Set|Vector|Queue|Deque|Map|Collection)$") } union 
+  { ?x java:hasFieldType ?cntr. ?cntr java:isA ?_cntr. filter regex(str(?_cntr), "java\\.util\\..*(List|Set|Vector|Queue|Deque|Map|Collection)$") }
+  ?x java:hasMethod ?m.
+  ?m jsbh:callsMethod ?vm.
+  filter regex(str(?vm), concat(str(?cntr), "\\.", "add"))
+  [] jsbh:methodCaller ?m; jsbh:methodCalled ?vm; jsbh:hasArg ?arg.
+  ?m java:hasParam [java:localNameIs ?arg; java:paramTypeIs ?y].
+  
+  ?x java:localNameIs ?xln.
+  ?y java:localNameIs ?yln.
+  bind(uri(concat(str(java:), "agg.", str(?xln), ".", str(?yln))) as ?agg)
+};
+
+insert {
+  ?ci a jsbh:ClassInstantiation.
+  ?ci sbh:eventContext ?x;
+    jsbh:instedClass ?y
+}
+where {
+  ?x jsbh:instantiatesClass ?y.
+  bind(uri(concat(str(java:), "ci.", sha1(concat(str(?x), str(?y))))) as ?ci)
+};
+
+insert {
+  ?fi a jsbh:FieldInitiation.
+  ?fi sbh:eventContext ?cls; jsbh:initedField ?fld;
+    jsbh:fieldInitExp ?initer
+}
+where {
+  ?fld jsbh:fieldIniter ?initer.
+  ?cls java:hasField ?fld.
+  bind(uri(concat(str(java:), "fi.", sha1(str(?fld)))) as ?fi)
+};
