@@ -523,7 +523,7 @@ where {
   filter regex(?ln, "[Hh]andle")
   [] java:isA ?h
 
-  bind(uri(concat(str(jd:), "dp.TemplateMethod.", sha1(str(?h)))) as ?dp)
+  bind(uri(concat(str(jd:), "dp.CoR.", sha1(str(?h)))) as ?dp)
 };
 
 
